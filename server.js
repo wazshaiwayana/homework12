@@ -27,6 +27,7 @@ function ask() {
         choices: [
             "view all employees",
             "view all departments",
+            "view all roles",
             "add employee",
             "add department",
             "add role",
@@ -44,7 +45,9 @@ function ask() {
             case "view all departments":
                 viewDepartments()
                 break;
-
+            case "view all roles" :
+                viewAllRoles()
+                break;
             case "add employee":
                 addEmployee()
                 break;
@@ -82,6 +85,13 @@ function viewDepartments() {
     })
 }
 
+function viewAllRoles() {
+    connection.query("SELECT role.id, role.title, department.name as department, role.salary FROM role LEFT JOIN department on role.department_id = department.id", function (err, data) {
+        console.table(data);
+        ask();
+    })
+}
+
 function addEmployee() {
     inquirer.prompt([{
             type: "input",
@@ -98,13 +108,9 @@ function addEmployee() {
             name: "roleId",
             message: "What is the employees role ID"
         },
-        {
-            type: "number",
-            name: "managerId",
-            message: "What is the employees manager's ID?"
-        }
+       
     ]).then(function(res) {
-        connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [res.firstName, res.lastName, res.roleId, res.managerId], function(err, data) {
+        connection.query('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [res.firstName, res.lastName, res.roleId], function(err, data) {
             if (err) throw err;
             console.table("Successfully Inserted");
             ask();
@@ -127,6 +133,9 @@ function addDepartment() {
 }
 
 function addRole() {
+    var departments = viewDepartments();
+    console.log(departments);
+
     inquirer.prompt([
         {
             message: "enter title:",
@@ -137,9 +146,9 @@ function addRole() {
             type: "number",
             name: "salary"
         }, {
-            message: "enter department ID:",
-            type: "number",
-            name: "department_id"
+            message: "which department does the role belong to?",
+            type: "list",
+            name: "choose one from the list"
         }
     ]).then(function (response) {
         connection.query("INSERT INTO roles (title, salary, department_id) values (?, ?, ?)", [response.title, response.salary, response.department_id], function (err, data) {
